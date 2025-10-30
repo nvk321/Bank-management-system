@@ -8,53 +8,49 @@ export const createCustomer = async (req, res) => {
   }
 
   try {
-    // 1️⃣ Create user first
-    const hashed = await bcrypt.hash(password, 10);
-    db.query(
-      "INSERT INTO user (username, password, role, email) VALUES (?, ?, 'customer', ?)",
-      [username, hashed, email || `${username}@example.com`],
-      (err, userResult) => {
-        if (err) {
-          console.error("Error creating user:", err);
-          return res.status(500).json({ message: "Error creating user" });
-        }
+    const saltRounds = Number(process.env.BCRYPT_ROUNDS || 10);
+    const hashed = await bcrypt.hash(password, saltRounds);
 
-        const user_id = userResult.insertId;
+    const conn = await db.getConnection();
+    try {
+      await conn.beginTransaction();
+      const [userResult] = await conn.execute(
+        "INSERT INTO user (username, password, role, email) VALUES (?, ?, 'customer', ?)",
+        [username, hashed, email || `${username}@example.com`]
+      );
 
-        // 2️⃣ Create customer linked to user_id
-        db.query(
-          "INSERT INTO customer (user_id, name, phone, address) VALUES (?, ?, ?, ?)",
-          [user_id, name, phone, address],
-          (err2, customerResult) => {
-            if (err2) {
-              console.error("Error creating customer:", err2);
-              return res.status(500).json({ message: "Error creating customer" });
-            }
+      const user_id = userResult.insertId;
 
-            res.status(201).json({
-              message: "Customer created",
-              user_id,
-              customer_id: customerResult.insertId,
-            });
-          }
-        );
-      }
-    );
+      const [customerResult] = await conn.execute(
+        "INSERT INTO customer (user_id, name, phone, address) VALUES (?, ?, ?, ?)",
+        [user_id, name, phone, address]
+      );
+
+      await conn.commit();
+
+      res.status(201).json({
+        message: "Customer created",
+        user_id,
+        customer_id: customerResult.insertId,
+      });
+    } catch (err) {
+      await conn.rollback();
+      throw err;
+    } finally {
+      conn.release();
+    }
   } catch (err) {
     console.error("Error creating customer:", err);
     res.status(500).json({ message: "Error creating customer" });
   }
 };
 
-export const getCustomers = (req, res) => {
-  db.query(
-    "SELECT customer_id, name FROM customer ORDER BY name",
-    (err, results) => {
-      if (err) {
-        console.error("Error fetching customers:", err);
-        return res.status(500).json({ message: "Error fetching customers" });
-      }
-      res.json(results);
-    }
-  );
+export const getCustomers = async (req, res) => {
+  try {
+    const [rows] = await db.query("SELECT customer_id, name FROM customer ORDER BY name");
+    res.json(rows);
+  } catch (err) {
+    console.error("Error fetching customers:", err);
+    res.status(500).json({ message: "Error fetching customers" });
+  }
 };

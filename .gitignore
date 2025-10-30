@@ -1,17 +1,55 @@
-# Node
-node_modules/
-npm-debug.log
-.env
-.DS_Store
+ # Node
+ node_modules/
+ **/node_modules/
+ npm-debug.log*
+ yarn-debug.log*
+ yarn-error.log*
+ pnpm-lock.yaml
+ package-lock.json
 
-# Frontend builds
-frontend/dist
-frontend/build
+ # Vite / build
+ dist/
+ frontend/dist/
+ frontend/.vite/
+ backend/dist/
 
-# Backend logs
-backend/logs
-backend/*.log
+ # Environment files (do NOT commit secrets)
+ .env
+ .env.local
+ .env.*.local
+ backend/.env
+ frontend/.env
 
-# IDE / system
-.vscode/
-.idea/
+ # Logs
+ logs/
+ *.log
+ npm-debug.log*
+
+ # OS files
+ .DS_Store
+ Thumbs.db
+
+ # IDE files
+ .vscode/
+ .idea/
+ *.suo
+ *.ntvs*
+ *.njsproj
+ *.sln
+
+ # Database files
+ *.sqlite
+ *.db
+ mysql-data/
+ *.sql
+
+ # Coverage
+ coverage/
+ coverage-final.json
+
+ # Packages
+ *.tgz
+
+ # Optional: ignore local builds if you prefer to keep built frontend for static serving
+ # Uncomment if you don't want to commit frontend build output
+ # /frontend/dist/
