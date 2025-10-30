@@ -57,7 +57,8 @@ if (process.env.SERVE_FRONTEND === 'true' || process.env.NODE_ENV === 'productio
 	const staticPath = path.join(__dirname, '..', 'frontend', 'dist');
 	app.use(express.static(staticPath));
 	// serve index.html for client-side routes, but skip API routes
-	app.get('*', (req, res, next) => {
+	// Use '/*' instead of '*' to avoid a path-to-regexp parsing issue in some environments
+	app.get('/*', (req, res, next) => {
 		if (req.path.startsWith('/api/')) return next();
 		res.sendFile(path.join(staticPath, 'index.html'), (err) => {
 			if (err) next(err);
