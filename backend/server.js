@@ -56,12 +56,13 @@ const __dirname = path.dirname(__filename);
 if (process.env.SERVE_FRONTEND === 'true' || process.env.NODE_ENV === 'production') {
 	const staticPath = path.join(__dirname, '..', 'frontend', 'dist');
 	app.use(express.static(staticPath));
-	// serve index.html for client-side routes, but skip API routes
-	// Use '/*' instead of '*' to avoid a path-to-regexp parsing issue in some environments
-	app.get('/*', (req, res, next) => {
-		if (req.path.startsWith('/api/')) return next();
+	// Serve index.html for client-side routes while skipping API routes.
+	// Use a simple middleware instead of a route pattern to avoid path-to-regexp issues
+	app.use((req, res, next) => {
+		// Only handle GET requests for non-API paths
+		if (req.method !== 'GET' || req.path.startsWith('/api/')) return next();
 		res.sendFile(path.join(staticPath, 'index.html'), (err) => {
-			if (err) next(err);
+			if (err) return next(err);
 		});
 	});
 }
